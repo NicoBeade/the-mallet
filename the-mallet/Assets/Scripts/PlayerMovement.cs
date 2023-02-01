@@ -13,7 +13,7 @@ public class PlayerMovement : MonoBehaviour
     private bool onGround; // Stores whether player is on the ground
     private bool usingSlam; // Stores whether slam has been activated
 
-    [SerializeField] private LayerMask jumpableGround;
+    [SerializeField] private LayerMask jumpableGround; 
 
 
     // Start is called before the first frame update
@@ -24,7 +24,7 @@ public class PlayerMovement : MonoBehaviour
 
     }
 
-    // Update is called once per frame
+    // Update is called once per frame 
     private void Update()
     {
         // Reads and modifies x direction and velocity only if the slam is not being used
