@@ -6,12 +6,12 @@ public class PlayerMovement : MonoBehaviour
 {
     public float jumpStrength = 14f;
     public float moveSpeed = 7f;
-    public float malletingStrength = 25f;
+    public float slamStrength = 25f;
 
     private Rigidbody2D rb; // Rigidbody
     private BoxCollider2D coll; // Collider
     private bool onGround; // Stores whether player is on the ground
-    private bool usingMallet; // Stores whether mallet has been activated
+    private bool usingSlam; // Stores whether slam has been activated
 
     [SerializeField] private LayerMask jumpableGround;
 
@@ -27,17 +27,17 @@ public class PlayerMovement : MonoBehaviour
     // Update is called once per frame
     private void Update()
     {
-        // Reads and modifies x direction and velocity only if the mallet is not being used
-        if (!usingMallet)
+        // Reads and modifies x direction and velocity only if the slam is not being used
+        if (!usingSlam)
         {
             float dirX = Input.GetAxisRaw("Horizontal");
             rb.velocity = new Vector2(moveSpeed * dirX, rb.velocity.y);
         }
         
-        // Checks if the player is grounded and turns off the mallet if it is
+        // Checks if the player is grounded and turns off the slam if it is
         if (onGround = IsGrounded())
         {
-            usingMallet = false;
+            usingSlam = false;
         }
 
 
@@ -46,11 +46,11 @@ public class PlayerMovement : MonoBehaviour
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpStrength);
         } 
-        // If the player is on the air then the mallet is activated
-        else if (usingMallet || Input.GetButtonDown("Jump") && !onGround)
+        // If the player is on the air then the slam is activated
+        else if (usingSlam || Input.GetButtonDown("Jump") && !onGround)
         {
-            rb.velocity = new Vector2(rb.velocity.x, -malletingStrength);
-            usingMallet = true;
+            rb.velocity = new Vector2(rb.velocity.x, -slamStrength);
+            usingSlam = true;
         }
 
         
