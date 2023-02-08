@@ -104,7 +104,6 @@ public class PlayerMovement : MonoBehaviour
 
         if (Time.time > groundEnablingTime && IsGrounded())
         {
-            rb.velocity = Vector2.zero;
             if (actionInProgress == (int)ACTIONS.SLAMMING)
             {
                 actionInProgress = (int)ACTIONS.JUMPING;
