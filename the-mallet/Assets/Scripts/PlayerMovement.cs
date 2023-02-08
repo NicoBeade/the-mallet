@@ -104,6 +104,7 @@ public class PlayerMovement : MonoBehaviour
 
         if (Time.time > groundEnablingTime && IsGrounded())
         {
+            rb.velocity = Vector2.zero;
             if (actionInProgress == (int)ACTIONS.SLAMMING)
             {
                 actionInProgress = (int)ACTIONS.JUMPING;
@@ -116,11 +117,15 @@ public class PlayerMovement : MonoBehaviour
         }
     }
     
-    // Checks if player is touching ground
+    // Checks if player is touching ground in a downwards direction only
     private bool IsGrounded() 
     {
-        // Checks if the player is toughing the ground but only in downwards direction
-        return Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.down, .15f, jumpableGround) && !Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.up, .1f, jumpableGround);
+        float boxcastMultiplier = 1f;
+        if(actionInProgress == (int)ACTIONS.SLAMMING)
+        {
+            boxcastMultiplier = 5f;
+        }
+        return Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.down, .15f * boxcastMultiplier, jumpableGround) && !Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.up, .1f, jumpableGround);
     }
 
     //Checks if player is colliding with an obstacle on the direction its moving.
