@@ -7,9 +7,11 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     // Movement constants
-    private const float LANE_DISTANCE = 3.0f;
+    private const float LANE_DISTANCE = 4f;
     private const int LEFT = -1;
     private const int RIGHT = 1;
+    private const float MINIMUM_ACCEPTED_DASH_LEFT = -9f;
+    private const float MAXIMUM_ACCEPTED_DASH_RIGHT = 10f;
 
     // Possible actions by player
     enum ACTIONS: int {DASHING = 0, SLAMMING, NO_ACTION, JUMPING, GROUNDED};
@@ -24,9 +26,10 @@ public class PlayerMovement : MonoBehaviour
     private BoxCollider2D coll; // Collider
     
     // State variables
-    public int actionInProgress; // Stores action in progress
+    private int actionInProgress; // Stores action in progress
     private int dashingDirection; // 1: right, -1: left
-    private int currentLane = 2; // Lanes are numbered 0-4 from left to right. Default is centered
+    private bool sideCollidedWhenDashing; // Stores if the player collided when dashing
+
 
     // Target position
     private Vector3 targetPosition; // Position to be in after dashing
@@ -35,8 +38,9 @@ public class PlayerMovement : MonoBehaviour
     private float horizontalMovement; // Stores horizontal movement info
     public float dashCooldown; // Time that has to go by before executing another dash
     private float nextDashTime; // Current time + cooldown
+    public float groundCheckWaitTime; // After jumping, the ground check is disabled for a brief window of time
+    private float groundEnablingTime; // Current time + grounding wait time
 
-    
 
     [SerializeField] private LayerMask jumpableGround; 
 
@@ -49,7 +53,6 @@ public class PlayerMovement : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         coll = GetComponent<BoxCollider2D>();
         actionInProgress = (int)ACTIONS.NO_ACTION;
-
     }
 
     // Update is called once per frame 
@@ -57,36 +60,46 @@ public class PlayerMovement : MonoBehaviour
     {
         switch (actionInProgress)
         {
-            case (int)ACTIONS.GROUNDED: // If the player is on the ground, then the program only admits jumping
+            // If the player is on the ground, then the program only admits jumping
+            case (int)ACTIONS.GROUNDED: 
                 if (Input.GetButtonDown("Jump"))
                 {
                     rb.velocity = new Vector2(rb.velocity.x, jumpStrength);
+                    groundEnablingTime = Time.time + groundCheckWaitTime; // Disables ground checks for a brief window of time
                     actionInProgress = (int)ACTIONS.JUMPING;
                 }
                 break;
 
-            case (int)ACTIONS.JUMPING: // If the player is on-air then the program accepts dashing and slamming
+            // If the player is on-air then the program accepts dashing and slamming
+            case (int)ACTIONS.JUMPING: 
                 horizontalMovement = Input.GetAxisRaw("Horizontal");
-                if (horizontalMovement != 0 && Time.time > nextDashTime)
+                if (Time.time > nextDashTime && horizontalMovement != 0 )
                 {
-                    if(horizontalMovement < 0 && currentLane != 0)
+                    if(horizontalMovement < 0 && rb.position.x > MINIMUM_ACCEPTED_DASH_LEFT)
                     {
                         targetPosition = Vector3.left * LANE_DISTANCE; // Adopts targeted position to the next lane to the player's left
                         dashingDirection = LEFT;
+                        actionInProgress = (int)ACTIONS.DASHING;
                     }
-                    else if (horizontalMovement > 0 && currentLane != 4)
+                    else if (horizontalMovement > 0 && rb.position.x < MAXIMUM_ACCEPTED_DASH_RIGHT)
                     {
                         targetPosition = Vector3.right * LANE_DISTANCE; // Adopts targeted position to the next lane to the player's left
                         dashingDirection = RIGHT;
+                        actionInProgress = (int)ACTIONS.DASHING;
                     }
-                    targetPosition += transform.position.z * Vector3.forward + transform.position.y * Vector3.up + transform.position.x * Vector3.right; // Other coordinates remain unchanged
-                    rb.gravityScale = 0;
-                    rb.velocity = Vector2.zero;
-                    nextDashTime = Time.time + dashCooldown;
-                    
-                    actionInProgress = (int)ACTIONS.DASHING;
+
+                    // If input indicates to dash, cooldown and target position are and gravity is turned off 
+                    if(actionInProgress == (int)ACTIONS.DASHING)
+                    {
+                        targetPosition += transform.position.z * Vector3.forward + transform.position.y * Vector3.up + transform.position.x * Vector3.right; // Other coordinates remain unchanged
+                        rb.gravityScale = 0;
+                        rb.velocity = Vector2.zero;
+                        nextDashTime = Time.time + dashCooldown;
+                    }
 
                 }
+
+                // If jumping when in-air, the player slams the ground
                 else if (Input.GetButtonDown("Jump"))
                 {
                     rb.velocity = new Vector2(rb.velocity.x, -slamStrength); // Adopts downwards fast velocity
@@ -95,11 +108,13 @@ public class PlayerMovement : MonoBehaviour
                 }
                 break;
 
-            case (int)ACTIONS.DASHING: // If the player is dashing the program moves the player
+            // If the player is dashing the program moves the player
+            case (int)ACTIONS.DASHING: 
                 MoveLane();
                 break;
 
-            case (int)ACTIONS.SLAMMING: // If the player is slamming the player moves downwards fast.
+            // If the player is slamming the player moves downwards fast.
+            case (int)ACTIONS.SLAMMING: 
                 rb.velocity = new Vector2(rb.velocity.x, -slamStrength);
                 break;
 
@@ -107,34 +122,49 @@ public class PlayerMovement : MonoBehaviour
                 break;
         }
 
-        actionInProgress = IsGrounded() ? (int)ACTIONS.GROUNDED : actionInProgress;
+        // Grounding is checked only after a few miliseconds after jumping
+        if (Time.time > groundEnablingTime && IsGrounded() && actionInProgress != (int)ACTIONS.DASHING) 
+        {
+            actionInProgress = (int)ACTIONS.GROUNDED;
+        }
 
     }
 
     // Checks if player is touching ground
     private bool IsGrounded() 
     {
-        return Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.down, .005f, jumpableGround);
+        // Checks if the player is toughing the ground but only in downwards direction
+        return Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.down, .1f, jumpableGround) && !Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.up, .1f, jumpableGround);
+    }
+
+    //Checks if player is colliding with an obstacle on the direction its moving.
+    private bool SideCollision()
+    {
+        return Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.right * dashingDirection, .05f, jumpableGround);
     }
 
     // Changes the position of the player to the desired lane.
     private void MoveLane()
     {
-        // Checks for invalid movements
-        if ((currentLane == 0 && dashingDirection == LEFT) || (currentLane == 4 && dashingDirection == RIGHT))
-        {
-            rb.gravityScale = 3;
-            actionInProgress = (int)ACTIONS.JUMPING;
-            return;
-        }
-
         // Modifies the horizontal position of the object until the target is reached
         transform.position += Vector3.right * dashSpeed * Time.deltaTime * dashingDirection;  
-        if (Vector3.Distance(transform.position,targetPosition) <= 0.1f) 
+        if (rb.position.x * dashingDirection >= targetPosition.x * dashingDirection)  
         {
-            currentLane += dashingDirection;
             rb.gravityScale = 3;
             actionInProgress = (int)ACTIONS.JUMPING;
+            sideCollidedWhenDashing = false; // Resets auxiliary variable 
         }
+
+        //Checks for collisions when dashing and returns to the original position if it collides
+        if (!sideCollidedWhenDashing && SideCollision())
+        {
+            dashingDirection *= -1;
+            targetPosition -= Vector3.left * LANE_DISTANCE * dashingDirection;
+            sideCollidedWhenDashing = true;
+        }
+        
     }
+
+
+
 }
