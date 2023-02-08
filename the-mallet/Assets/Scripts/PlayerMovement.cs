@@ -20,7 +20,7 @@ public class PlayerMovement : MonoBehaviour
     public float jumpStrength;
     public float dashSpeed;
     public float slamStrength;
-
+    public float slamBounceMultiplier = 1.3f; 
     // Unity resources
     private Rigidbody2D rb; // Rigidbody
     private BoxCollider2D coll; // Collider
@@ -64,8 +64,7 @@ public class PlayerMovement : MonoBehaviour
             case (int)ACTIONS.GROUNDED: 
                 if (Input.GetButtonDown("Jump"))
                 {
-                    rb.velocity = new Vector2(rb.velocity.x, jumpStrength);
-                    groundEnablingTime = Time.time + groundCheckWaitTime; // Disables ground checks for a brief window of time
+                    Jump();
                     actionInProgress = (int)ACTIONS.JUMPING;
                 }
                 break;
@@ -129,6 +128,18 @@ public class PlayerMovement : MonoBehaviour
         }
 
     }
+    
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        Platform tile =  collision.gameObject.GetComponent<Platform>();
+        if (tile && actionInProgress == (int)ACTIONS.SLAMMING)  // TODO : usingSlam is always false on collision due to Update() 
+        {
+            actionInProgress = (int)ACTIONS.JUMPING;
+            tile.SlamHit();
+            Bounce();
+            // jump ?)
+        }
+    }
 
     // Checks if player is touching ground
     private bool IsGrounded() 
@@ -162,7 +173,18 @@ public class PlayerMovement : MonoBehaviour
             targetPosition -= Vector3.left * LANE_DISTANCE * dashingDirection;
             sideCollidedWhenDashing = true;
         }
-        
+    }
+
+    private void Jump()
+    {
+        rb.velocity = new Vector2(rb.velocity.x, jumpStrength);
+        groundEnablingTime = Time.time + groundCheckWaitTime; // Disables ground checks for a brief window of time
+
+    }
+    private void Bounce()
+    {
+        rb.velocity = new Vector2(rb.velocity.x, jumpStrength * slamBounceMultiplier);
+
     }
 
 
