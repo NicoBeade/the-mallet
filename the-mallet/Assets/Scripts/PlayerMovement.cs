@@ -27,7 +27,6 @@ public class PlayerMovement : MonoBehaviour
     // State variables
     public int actionInProgress; // Stores action in progress
     private int dashingDirection; // 1: right, -1: left
-    private bool sideCollidedWhenDashing; // Stores if the player collided when dashing
 
     // Target position
     private Vector3 targetPosition; // Position to be in after dashing
@@ -102,29 +101,16 @@ public class PlayerMovement : MonoBehaviour
                 break;
         }
 
-        if (Time.time > groundEnablingTime && IsGrounded())
+        if (Time.time > groundEnablingTime && IsGrounded() && actionInProgress != (int)ACTIONS.DASHING)
         {
-            if (actionInProgress == (int)ACTIONS.SLAMMING)
-            {
-                actionInProgress = (int)ACTIONS.JUMPING;
-                Bounce();
-            }
-            else if (actionInProgress != (int)ACTIONS.DASHING)
-            {
-                actionInProgress = (int)ACTIONS.GROUNDED;
-            }
+            actionInProgress = (int)ACTIONS.GROUNDED;
         }
     }
     
     // Checks if player is touching ground in a downwards direction only
     private bool IsGrounded() 
     {
-        float boxcastMultiplier = 1f;
-        if(actionInProgress == (int)ACTIONS.SLAMMING)
-        {
-            boxcastMultiplier = 5f;
-        }
-        return Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.down, .15f * boxcastMultiplier, jumpableGround) && !Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.up, .1f, jumpableGround);
+        return Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.down, .15f, jumpableGround) && !Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.up, .1f, jumpableGround);
     }
 
     //Checks if player is colliding with an obstacle on the direction its moving.
@@ -142,16 +128,9 @@ public class PlayerMovement : MonoBehaviour
         {
             rb.gravityScale = 3;
             actionInProgress = (int)ACTIONS.JUMPING;
-            sideCollidedWhenDashing = false; // Resets auxiliary variable 
+            Debug.Log("Reached Target");
         }
 
-        //Checks for collisions when dashing and returns to the original position if it collides
-        if (!sideCollidedWhenDashing && SideCollision())
-        {
-            dashingDirection *= -1;
-            targetPosition -= Vector3.left * DASH_DISTANCE * dashingDirection;
-            sideCollidedWhenDashing = true;
-        }
     }
 
     // Player jump
@@ -191,4 +170,19 @@ public class PlayerMovement : MonoBehaviour
         rb.velocity = new Vector2(rb.velocity.x, -slamStrength);
     }
 
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        // If there is a collision whilst slamming
+        if (actionInProgress == (int)ACTIONS.SLAMMING)
+        {
+            Bounce();
+            actionInProgress = (int)ACTIONS.JUMPING;
+        }
+        else if (actionInProgress == (int)ACTIONS.DASHING)
+        {
+            dashingDirection *= -1;
+            targetPosition -= Vector3.left * DASH_DISTANCE;
+        }
+    }
 }
+

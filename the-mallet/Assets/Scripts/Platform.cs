@@ -4,10 +4,16 @@ using UnityEngine;
 
 public class Platform : MonoBehaviour
 {
-    // Start is called before the first frame update
-    private BoxCollider2D coll; // Collider
-    private float moveSpeed;
+    // Unity resources
+    private BoxCollider2D coll; 
 
+    // Public movement magnitudes
+    public float moveSpeed;
+
+
+    //*************************************
+
+    // Start is called before the first frame update
     void Start()
     {
         coll = GetComponent<BoxCollider2D>();
@@ -27,7 +33,7 @@ public class Platform : MonoBehaviour
     }
     public void SlamHit()
     {
-        Debug.Log("Slam Hit!!!"); // TODO implement what should 
+        Debug.Log("Slam Hit!!!"); 
     }
 
 
