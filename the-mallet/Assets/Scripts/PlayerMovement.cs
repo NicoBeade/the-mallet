@@ -101,7 +101,7 @@ public class PlayerMovement : MonoBehaviour
                 break;
         }
 
-        if (Time.time > groundEnablingTime && IsGrounded() && actionInProgress != (int)ACTIONS.DASHING)
+        if (Time.time > groundEnablingTime && IsGrounded() && actionInProgress != (int)ACTIONS.DASHING && actionInProgress != (int)ACTIONS.SLAMMING)
         {
             actionInProgress = (int)ACTIONS.GROUNDED;
         }
@@ -113,11 +113,6 @@ public class PlayerMovement : MonoBehaviour
         return Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.down, .15f, jumpableGround) && !Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.up, .1f, jumpableGround);
     }
 
-    //Checks if player is colliding with an obstacle on the direction its moving.
-    private bool SideCollision()
-    {
-        return Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.right * dashingDirection, .05f, jumpableGround);
-    }
 
     // Changes the position of the player in the desired direction
     private void Dash()
@@ -145,6 +140,7 @@ public class PlayerMovement : MonoBehaviour
     {
         rb.velocity = new Vector2(rb.velocity.x, jumpStrength * slamBounceMultiplier);
         groundEnablingTime = Time.time + groundCheckWaitTime; // Disables ground checks for a brief window of time
+
     }
 
     // Turns off gravity and sets up cooldown
@@ -172,12 +168,21 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        // Stores the platform the player collided with 
+        Platform platform = collision.gameObject.GetComponent<Platform>();
+
         // If there is a collision whilst slamming
         if (actionInProgress == (int)ACTIONS.SLAMMING)
         {
             Bounce();
             actionInProgress = (int)ACTIONS.JUMPING;
+            if (collision.gameObject.tag == "Platform")
+            {
+                Debug.Log("Collision in progress");
+                platform.SlamHit(platform.gameObject);
+            }
         }
+         
         else if (actionInProgress == (int)ACTIONS.DASHING)
         {
             dashingDirection *= -1;
