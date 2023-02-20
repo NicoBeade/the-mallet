@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c0b37c0a7803303489455eed5779a94c
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - movingPlatformPrefab: {fileID: 7977842661315325670, guid: 62e4a98ecd2fdba4781a0fc7279b1291, type: 3}
+  - normalPlatformPrefab: {fileID: 5677522051630646153, guid: 5eb6f44d1dbb9f049b4c1ba1b0d773a1, type: 3}
+  - basePlatformPrefab: {fileID: 2102745130339999481, guid: 8322478d9a6bd1b4ab4c772619fec331, type: 3}
+  - spawnPoint: {fileID: 4483232336968755043, guid: 4b036f678ecdf6444a59cb61d07bf520, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

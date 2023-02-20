@@ -123,7 +123,6 @@ public class PlayerMovement : MonoBehaviour
         {
             rb.gravityScale = 3;
             actionInProgress = (int)ACTIONS.JUMPING;
-            Debug.Log("Reached Target");
         }
 
     }
@@ -169,7 +168,7 @@ public class PlayerMovement : MonoBehaviour
     private void OnCollisionEnter2D(Collision2D collision)
     {
         // Stores the platform the player collided with 
-        Platform platform = collision.gameObject.GetComponent<Platform>();
+        BasePlatform platform = collision.gameObject.GetComponent<BasePlatform>();
 
         // If there is a collision whilst slamming
         if (actionInProgress == (int)ACTIONS.SLAMMING)
@@ -178,8 +177,7 @@ public class PlayerMovement : MonoBehaviour
             actionInProgress = (int)ACTIONS.JUMPING;
             if (collision.gameObject.tag == "Platform")
             {
-                Debug.Log("Collision in progress");
-                platform.SlamHit(platform.gameObject);
+                //platform.SlamHit(platform.gameObject);
             }
         }
          

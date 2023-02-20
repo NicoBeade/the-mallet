@@ -4,40 +4,43 @@ using UnityEngine;
 
 
 
-public class MovingPlatform : Platform
+public class MovingPlatform : BasePlatform
 {
+    // Defines the type of platform
+    public override string PlatformType { get { return "MovingPlatform"; } }
+
     // Movement variables
     public float moveSpeed = 5;
-    private float deadZone = -18;
-
+    private const float deadZone = -18;
 
     //*************************************
 
     // Start is called before the first frame update
     void Start()
     {
-
+        
     }
 
     // Update is called once per frame
     void Update()
     {
-        Move();
-        CleanScreen();
+        MovePlatform();
+        CheckPlatformOutOfBounds();
     }
 
     // Moves de platform
-    public void Move()
+    public void MovePlatform()
     {
         transform.position += Vector3.left * moveSpeed * Time.deltaTime;
     }
 
     // Deletes platform
-    public void CleanScreen()
+    public void CheckPlatformOutOfBounds()
     {
         if (transform.position.x < deadZone)
         {
-            Platform.DestroyPlatform(gameObject);
+            PlatformManager.Instance.DeactivatePlatform(gameObject);
+            Debug.Log("Deactivating " + gameObject.name);
         }
     }
 }

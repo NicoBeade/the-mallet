@@ -6,6 +6,7 @@ TagManager:
   tags:
   - NormalPlatform
   - Platform
+  - PlatformManager
   layers:
   - Default
   - TransparentFX
